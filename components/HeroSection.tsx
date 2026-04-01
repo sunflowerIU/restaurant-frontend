@@ -10,6 +10,7 @@ import HeroBackground from "./HeroBackground";
 import HeroCard from "./HeroCard";
 import HeroFloatingFoods from "./HeroFloatingFoods";
 import HeroHeadline from "./HeroHeadline";
+import { FaPhone } from "react-icons/fa6";
 
 function HeroSection() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -41,9 +42,9 @@ function HeroSection() {
       <HeroBackground neonOrbRefs={neonOrbRefs} beamRefs={beamRefs} />
       <HeroFloatingFoods outerRefs={outerRefs} innerRefs={innerRefs} />
 
-      <div className="relative mx-auto grid min-h-screen max-w-6xl grid-cols-1 items-start gap-10 px-6 py-8 mt-10 md:h-full md:min-h-0 md:grid-cols-2 md:items-center md:mt-0 md:py-6">
+      <div className="relative mx-auto grid min-h-screen max-w-6xl grid-cols-1 items-start gap-10 px-6 py-8 mt-15 md:h-full md:min-h-0 md:grid-cols-2 md:items-center md:mt-0 md:py-6">
         {/* Left */}
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col justify-center ">
           <p
             data-hero-fade
             className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/4 px-3 py-1 text-sm text-white/70 backdrop-blur"
@@ -66,8 +67,7 @@ function HeroSection() {
             }}
             className="mt-4 max-w-xl text-pretty text-base text-white/70 md:text-lg"
           >
-            Handmade dumplings, bold achar, and street-style bowls — crafted
-            fresh, served fast.
+            Add items to your cart and proceed to checkout or call us directly.
           </p>
 
           <p
@@ -76,18 +76,18 @@ function HeroSection() {
             }}
             className="mt-3 max-w-xl text-pretty text-sm text-white/55 md:text-base"
           >
-            Dine-in, pickup, or delivery — your favorites, always on point.
+            Order food without creating your account.
           </p>
 
           <div data-hero-fade className="mt-7 flex flex-wrap gap-3">
             {/* <Button asChild size="lg" className="rounded-2xl">
               <Link href="/menu">Explore Menu</Link>
             </Button> */}
-            <AppButton href="/menu" size="xl">
+            <AppButton variant="destructive" href="/menu" size="xl">
               Explore Menu
             </AppButton>
-            <AppButton variant="destructive" href="/book" size="xl">
-              Order Without login
+            <AppButton href="tel:+9779861911983" variant="outline" size="xl">
+              <FaPhone /> Call Now
             </AppButton>
           </div>
 
