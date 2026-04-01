@@ -1,11 +1,13 @@
 "use client";
 
-import * as React from "react";
 import Image from "next/image";
+import * as React from "react";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
+import { formatMoney, useCart } from "@/app/_providers/CartContext";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -14,8 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { formatMoney, useCart } from "@/app/_providers/CartContext";
 
 import type { MenuItem } from "../app/menu/types";
 

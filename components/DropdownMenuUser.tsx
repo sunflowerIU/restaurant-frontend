@@ -1,11 +1,5 @@
 "use client";
-import {
-  CreditCardIcon,
-  IceCreamBowl,
-  LogOutIcon,
-  SettingsIcon,
-  UserIcon,
-} from "lucide-react";
+import { IceCreamBowl, LogOutIcon, UserIcon } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -14,9 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 import AppButton from "./AppButton";
 import { NavigationAvatar } from "./NavigationAvatar";
-import Link from "next/link";
 
 export function DropdownMenuUser({
   mobileNav = false,
@@ -39,7 +33,7 @@ export function DropdownMenuUser({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="flex items-center gap-2">
+          <Link href="/orders" className="flex items-center gap-2">
             <IceCreamBowl className="h-4 w-4" />
             <span>My Orders</span>
           </Link>
