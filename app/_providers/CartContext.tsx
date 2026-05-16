@@ -10,7 +10,7 @@ export type CartLine = {
   name: string;
   imageSrc: string;
   price: number;
-  currency: Currency;
+  currency: string;
   qty: number;
 };
 
@@ -23,7 +23,7 @@ export type AddToCartItem = {
   name: string;
   imageSrc: string;
   price: number;
-  currency: Currency;
+  currency: string;
 };
 
 export type CartActions = {
@@ -56,6 +56,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     try {
+      // setState((prev) => ({
+      //   lines: prev.lines.filter((l) => l.isAvailable === true),
+      // }));
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw) as CartState;
@@ -66,6 +69,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
+    // console.log(state);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
@@ -114,6 +118,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // function removeUnavailableOnes() {
+  //   setState((prev) => ({
+  //     lines: prev.lines.filter((l) => l.isAvailable),
+  //   }));
+  // }
+
   const remove = React.useCallback((id: string) => {
     setState((prev) => ({ lines: prev.lines.filter((l) => l.id !== id) }));
   }, []);
@@ -147,7 +157,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   return <CartCtx.Provider value={value}>{children}</CartCtx.Provider>;
 }
 
-export function formatMoney(currency: Currency, value: number) {
-  if (currency === "Rs") return `Rs ${value.toFixed(0)}`;
+export function formatMoney(currency: string, value: number) {
+  if (currency === "Rs") return `Rs ${Number(value).toFixed(0)}`;
   return `$${value.toFixed(2)}`;
 }

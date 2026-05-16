@@ -2,18 +2,17 @@
 
 import Link from "next/link";
 
+import type { ExtraNavItem, NavItem } from "../lib/types/navigation.types";
 import AppButton from "./AppButton";
-import type { ExtraNavItem, NavItem } from "../lib/navigation.types";
-import { DropdownMenuUser } from "./DropdownMenuUser";
 
 type Props = {
   items: NavItem[];
-  otherNavItems: ExtraNavItem[];
+  showUserOrLogin: () => React.ReactNode;
 };
 
 export default function NavigationDesktopLinks({
   items,
-  otherNavItems,
+  showUserOrLogin,
 }: Props) {
   return (
     <div className="hidden items-center gap-2 md:flex">
@@ -29,13 +28,7 @@ export default function NavigationDesktopLinks({
         ))}
       </div>
 
-      {otherNavItems.map((item) => (
-        <AppButton variant={item.variant} key={item.href} href={item.href}>
-          {item.label}
-        </AppButton>
-      ))}
-
-      <DropdownMenuUser mobileNav={false} />
+      {showUserOrLogin()}
     </div>
   );
 }

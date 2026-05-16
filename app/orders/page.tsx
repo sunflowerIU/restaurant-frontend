@@ -20,50 +20,25 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import AppButton from "@/components/AppButton";
-
-type OrderStatus = "Confirming" | "Preparing" | "Delivered" | "Cancelled";
-
-type Order = {
-  id: string;
-  placedAt: string;
-  itemsSummary: string;
-  total: string;
-  status: OrderStatus;
-};
-
-// ✅ move outside component (stable reference)
-const ALL_ORDERS: Order[] = [
-  {
-    id: "NK-1027",
-    placedAt: "Mar 18, 2026 • 8:12 PM",
-    itemsSummary: "Spiced Chicken Plate ×1",
-    total: "Rs 420",
-    status: "Preparing",
-  },
-  {
-    id: "NK-1024",
-    placedAt: "Mar 14, 2026 • 7:20 PM",
-    itemsSummary: "Steamed Momo ×1, Chowmein ×1",
-    total: "Rs 670",
-    status: "Delivered",
-  },
-  {
-    id: "NK-1011",
-    placedAt: "Feb 22, 2026 • 9:05 PM",
-    itemsSummary: "Jhol Momo ×2",
-    total: "Rs 720",
-    status: "Cancelled",
-  },
-];
+import { apiFetch } from "@/lib/authorization/api";
+import { toast } from "sonner";
+import { Order, ordersData, OrderStatus } from "../../lib/types/order";
+import Spinner from "@/components/Spinner";
 
 function StatusBadge({ status }: { status: OrderStatus }) {
-  const cls =
-    status === "Delivered"
-      ? "bg-emerald-500/20 text-emerald-200"
-      : status === "Preparing"
-        ? "bg-cyan-500/20 text-cyan-200"
-        : "bg-red-500/20 text-red-200";
-  return <Badge className={cn(cls, "hover:bg-opacity-20")}>{status}</Badge>;
+  const colors: Record<OrderStatus, string> = {
+    delivered: "bg-emerald-500/20 text-emerald-200",
+    preparing: "bg-cyan-500/20 text-cyan-200",
+    confirmed: "bg-cyan-500/20 text-cyan-200",
+    shipped: "bg-cyan-500/20 text-cyan-200",
+    pending: "bg-amber-500/20 text-amber-200",
+    cancelled: "bg-red-500/20 text-red-200",
+  };
+  return (
+    <Badge className={cn(colors[status], "hover:bg-opacity-20")}>
+      {status}
+    </Badge>
+  );
 }
 
 function matchesStatus(order: Order, tab: string) {
@@ -72,6 +47,7 @@ function matchesStatus(order: Order, tab: string) {
 }
 
 function OrdersCards({ orders }: { orders: Order[] }) {
+  console.log(orders);
   return (
     <div className="grid gap-3">
       {orders.map((o) => (
@@ -83,7 +59,12 @@ function OrdersCards({ orders }: { orders: Order[] }) {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-white">{o.id}</p>
-                <p className="mt-1 text-xs text-white/55">{o.placedAt}</p>
+                <p className="mt-1 text-xs text-white/55">
+                  {new Date(o.placedAt).toLocaleString()}
+                </p>
+                <p className="mt-1 text-xs text-white">
+                  payment:- {o.paymentStatus}
+                </p>
               </div>
               <StatusBadge status={o.status} />
             </div>
@@ -93,7 +74,7 @@ function OrdersCards({ orders }: { orders: Order[] }) {
             <p className="text-sm text-white/70">{o.itemsSummary}</p>
 
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm font-semibold text-white">{o.total}</p>
+              <p className="text-sm font-semibold text-white">Rs {o.total}</p>
               <Button
                 asChild
                 variant="outline"
@@ -129,6 +110,7 @@ function OrdersTable({ orders }: { orders: Order[] }) {
                   <TableHead className="text-white/70">Order</TableHead>
                   <TableHead className="text-white/70">Placed</TableHead>
                   <TableHead className="text-white/70">Items</TableHead>
+                  <TableHead className="text-white/70">Payment</TableHead>
                   <TableHead className="text-white/70">Total</TableHead>
                   <TableHead className="text-right text-white/70">
                     Status
@@ -145,12 +127,17 @@ function OrdersTable({ orders }: { orders: Order[] }) {
                       {o.id}
                     </TableCell>
                     <TableCell className="text-white/65">
-                      {o.placedAt}
+                      {new Date(o.placedAt).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-white/65">
                       {o.itemsSummary}
                     </TableCell>
-                    <TableCell className="text-white/75">{o.total}</TableCell>
+                    <TableCell className="text-white/65">
+                      {o.paymentStatus}
+                    </TableCell>
+                    <TableCell className="text-white/75">
+                      Rs {o.total}
+                    </TableCell>
                     <TableCell className="text-right">
                       <StatusBadge status={o.status} />
                     </TableCell>
@@ -189,24 +176,68 @@ function OrdersTable({ orders }: { orders: Order[] }) {
 }
 
 export default function OrdersPage() {
+  const [allOrders, setAllOrders] = React.useState<Order[]>([]);
   const [tab, setTab] = React.useState<
     "all" | "preparing" | "delivered" | "cancelled"
   >("all");
   const [q, setQ] = React.useState("");
   const dq = React.useDeferredValue(q);
+  const [isPending, setIsPending] = React.useState(true);
 
-  // ✅ deps only include what can actually change
+  // ✅ Memoized filtering based on STATE
   const filtered = React.useMemo(() => {
     const s = dq.trim().toLowerCase();
-    return ALL_ORDERS.filter((o) => matchesStatus(o, tab)).filter((o) => {
-      if (!s) return true;
-      return (
-        o.id.toLowerCase().includes(s) ||
-        o.itemsSummary.toLowerCase().includes(s) ||
-        o.status.toLowerCase().includes(s)
-      );
-    });
-  }, [dq, tab]);
+    return allOrders
+      .filter((o) => matchesStatus(o, tab))
+      .filter((o) => {
+        if (!s) return true;
+        return (
+          o.id.toLowerCase().includes(s) ||
+          o.itemsSummary?.toLowerCase().includes(s)
+        );
+      });
+  }, [dq, tab, allOrders]); // ✅ add allOrders to deps
+  React.useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const response = await apiFetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/order/get`,
+        );
+
+        const { data } = await response.json();
+        // console.log(data);
+
+        if (!response.ok) {
+          setIsPending(false);
+          throw new Error("Failed to fetch");
+        }
+
+        // console.log(data);
+        const mappedOrders: Order[] = data.map((order: ordersData) => ({
+          id: order._id,
+          placedAt: order.createdAt,
+          itemsSummary: order.items
+            .map((i) => `${i.name} x ${i.qty}`)
+            .join(", "),
+          total: order.totalAmount,
+          status: order.orderStatus,
+          paymentStatus: order.paymentStatus,
+        }));
+
+        setAllOrders(mappedOrders);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to fetch orders",
+        );
+      } finally {
+        setIsPending(false);
+      }
+    }
+
+    fetchOrders();
+  }, []);
+
+  if (isPending) return <Spinner />;
 
   return (
     <main className="relative min-h-screen overflow-hidden">
@@ -277,10 +308,10 @@ export default function OrdersPage() {
           </TabsList>
 
           <TabsContent value={tab} className="mt-5">
-            <div className="md:hidden">
+            <div className="lg:hidden">
               <OrdersCards orders={filtered} />
             </div>
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <OrdersTable orders={filtered} />
             </div>
           </TabsContent>

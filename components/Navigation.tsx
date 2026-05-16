@@ -3,23 +3,21 @@
 
 import { useEffect, useState } from "react";
 
+import { useAuth } from "@/app/_providers/AuthProvider";
 import CartSheet from "@/app/_providers/CartSheet";
+import type { NavItem } from "../lib/types/navigation.types";
+import AppButton from "./AppButton";
+import { DropdownMenuUser } from "./DropdownMenuUser";
 import NavigationDesktopLinks from "./NavigationDesktopLinks";
 import NavigationLogo from "./NavigationLogo";
 import {
   NavigationMobileDrawer,
   NavigationMobileToggle,
 } from "./NavigationMobileMenu";
-import type { ExtraNavItem, NavItem } from "../lib/navigation.types";
 
 const items: NavItem[] = [
   { label: "Menu", href: "/menu" },
   { label: "Contact", href: "/contact" },
-];
-
-const otherNavItems: ExtraNavItem[] = [
-  { label: "Login", href: "/login", variant: "secondary" },
-  { label: "Explore Menu", href: "/menu", variant: "destructive" },
 ];
 
 export default function Navigation({
@@ -30,7 +28,18 @@ export default function Navigation({
   logoSrc?: string;
   brand?: string;
 }) {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
+
+  function showUserOrLogin() {
+    return user ? (
+      <DropdownMenuUser onClose={() => setOpen(false)} mobileNav={true} />
+    ) : (
+      <AppButton variant="secondary" href="/login">
+        Login
+      </AppButton>
+    );
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -56,7 +65,7 @@ export default function Navigation({
             <NavigationLogo logoSrc={logoSrc} brand={brand} />
             <NavigationDesktopLinks
               items={items}
-              otherNavItems={otherNavItems}
+              showUserOrLogin={showUserOrLogin}
             />
 
             {/* Right: always-visible cart + mobile menu toggle */}
@@ -77,7 +86,7 @@ export default function Navigation({
         brand={brand}
         items={items}
         onClose={() => setOpen(false)}
-        otherNavitems={otherNavItems}
+        showUserOrLogin={showUserOrLogin}
       />
     </>
   );

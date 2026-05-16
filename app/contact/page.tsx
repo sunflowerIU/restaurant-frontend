@@ -160,7 +160,7 @@ export default function ContactPage() {
                   <div className="mt-3 space-y-2 text-sm text-white/65">
                     <p className="space-x-2">
                       Phone:{" "}
-                      <span className="text-white/80">+977-98461911983</span>
+                      <span className="text-white/80">+977-9861911983</span>
                       <AppButton variant="secondary" href="tel:+9779861911983">
                         Call Now
                       </AppButton>

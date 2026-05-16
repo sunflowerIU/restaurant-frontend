@@ -73,7 +73,9 @@ export default function MenuTable({ items }: { items: MenuItem[] }) {
 
                 <TableBody>
                   {filtered.map((x) => {
+                    // console.log(x);
                     const isAdded = cartItemIds.has(x.id);
+                    if (!x.isAvailable) return "";
                     return (
                       <TableRow key={x.id} className="border-white/10">
                         <TableCell className="hidden sm:table-cell">
@@ -95,7 +97,7 @@ export default function MenuTable({ items }: { items: MenuItem[] }) {
                           {formatMoney(x.currency, x.price)}
                         </TableCell>
                         <TableCell className="hidden text-white/65 md:table-cell">
-                          {x.timeToMake}
+                          {x.timeToMake}-{x.timeToMake + 5} min
                         </TableCell>
                         <TableCell className="text-right">
                           <Button

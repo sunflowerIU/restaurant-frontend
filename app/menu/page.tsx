@@ -1,8 +1,6 @@
 // file: app/menu/page.tsx
 "use client";
 
-import * as React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -10,15 +8,54 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
+import Spinner from "@/components/Spinner";
+import { toast } from "sonner";
 import MenuTable from "../../components/MenuTable";
-import { CATEGORIES, MENU } from "./data";
-import type { MenuCategory } from "./types";
+import { MenuItem, MenuType } from "./types";
 
 export default function Page() {
-  const [activeCategory, setActiveCategory] =
-    React.useState<MenuCategory>("breakfast");
+  const [activeCategory, setActiveCategory] = React.useState<string>("");
+
+  const [menu, setMenu] = React.useState<MenuType[]>([]);
+
+  const [isLoading, setIsLoading] = React.useState<true | false>(true);
+
+  // console.log(menu);
+  console.log(menu.find((item) => item.name === activeCategory)?.items);
+
+  const activeCategoryData: MenuItem[] =
+    menu.find((item) => item.name === activeCategory)?.items ?? [];
+
+  React.useEffect(() => {
+    async function getMenu() {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/product/menu`,
+          {
+            next: { revalidate: 3600 },
+          },
+        );
+        const menu = await response.json();
+        setMenu(menu.data);
+        setActiveCategory(menu.data[0].name);
+        setIsLoading(false);
+        console.log(menu);
+      } catch (error) {
+        setIsLoading(false);
+        return toast.error("error fetching menu");
+      }
+    }
+    getMenu();
+  }, []);
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   return (
     <main className="relative h-dvh overflow-hidden">
@@ -43,13 +80,15 @@ export default function Page() {
         {/* tabs area fills remaining height; only table scrolls */}
         <Tabs
           value={activeCategory}
-          onValueChange={(v) => setActiveCategory(v as MenuCategory)}
+          onValueChange={(v) => {
+            setActiveCategory(v);
+          }}
           className="flex h-full min-h-0 flex-col"
         >
           <div className="md:hidden">
             <Select
               value={activeCategory}
-              onValueChange={(v) => setActiveCategory(v as MenuCategory)}
+              onValueChange={(v) => setActiveCategory(v)}
             >
               <SelectTrigger className="h-11 w-full rounded-2xl border-white/10 bg-white/3 px-4 text-white backdrop-blur data-placeholder:text-white/60 text-md [&_svg]:text-white/70">
                 <SelectValue placeholder="Select category" />
@@ -62,13 +101,13 @@ export default function Page() {
                 avoidCollisions={false}
                 className="p-2 bg-rgba(0,220,255,0.10) text-white backdrop-blur-xl"
               >
-                {CATEGORIES.map((c) => (
+                {menu.map((c) => (
                   <SelectItem
-                    key={c.key}
-                    value={c.key}
+                    key={c.id}
+                    value={c.name}
                     className="text-md border-b mb-2 border-destructive/20 "
                   >
-                    {c.label}
+                    {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -84,16 +123,16 @@ export default function Page() {
             )}
           >
             <div className="flex w-max items-center gap-2">
-              {CATEGORIES.map((c) => (
+              {menu.map((c) => (
                 <TabsTrigger
-                  key={c.key}
-                  value={c.key}
+                  key={c.id}
+                  value={c.name}
                   className={cn(
                     "shrink-0 rounded-xl px-4 py-2 text-white/70",
                     "data-[state=active]:bg-white/10 data-[state=active]:text-white",
                   )}
                 >
-                  {c.label}
+                  {c.name}
                 </TabsTrigger>
               ))}
             </div>
@@ -102,16 +141,16 @@ export default function Page() {
           {/* Content must be min-h-0 so inner ScrollArea can scroll */}
           <div className="mt-4 flex-1 min-h-0">
             <div className="h-full min-h-0 md:hidden">
-              <MenuTable items={MENU[activeCategory]} />
+              <MenuTable items={activeCategoryData} />
             </div>
 
-            {CATEGORIES.map((c) => (
+            {menu.map((c) => (
               <TabsContent
-                key={c.key}
-                value={c.key}
+                key={c.id}
+                value={c.name}
                 className="hidden h-full min-h-0 md:block"
               >
-                <MenuTable items={MENU[c.key]} />
+                <MenuTable items={activeCategoryData} />
               </TabsContent>
             ))}
           </div>

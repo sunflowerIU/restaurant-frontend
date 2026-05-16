@@ -5,7 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import AppButton from "./AppButton";
 import NavigationLogo from "./NavigationLogo";
-import type { ExtraNavItem, NavItem } from "../lib/navigation.types";
+import type { ExtraNavItem, NavItem } from "../lib/types/navigation.types";
 import { DropdownMenuUser } from "./DropdownMenuUser";
 
 type ToggleProps = {
@@ -52,7 +52,7 @@ type DrawerProps = {
   brand: string;
   items: NavItem[];
   onClose: () => void;
-  otherNavitems: ExtraNavItem[];
+  showUserOrLogin: () => React.ReactNode;
 };
 
 export function NavigationMobileDrawer({
@@ -61,7 +61,7 @@ export function NavigationMobileDrawer({
   brand,
   items,
   onClose,
-  otherNavitems,
+  showUserOrLogin,
 }: DrawerProps) {
   return (
     <div
@@ -114,7 +114,7 @@ export function NavigationMobileDrawer({
 
         <div className="px-5 pb-6">
           <div className="text-white flex mb-5 items-center">
-            <DropdownMenuUser mobileNav={true} />
+            {showUserOrLogin()}
           </div>
           <div className="grid gap-2">
             {items.map((it) => (
@@ -126,18 +126,6 @@ export function NavigationMobileDrawer({
               >
                 {it.label}
               </Link>
-            ))}
-          </div>
-
-          <div className="mt-2 flex flex-row gap-2">
-            {otherNavitems.map((item) => (
-              <AppButton
-                href={item.href}
-                variant={item.variant}
-                key={item.href}
-              >
-                {item.label}
-              </AppButton>
             ))}
           </div>
 
