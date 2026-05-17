@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/app/_providers/AuthProvider";
-import { apiFetch } from "@/lib/authorization/api";
+import { useApiFetch } from "@/lib/authorization/api";
 import type {
   Address,
   NewAddressInput,
@@ -12,6 +12,7 @@ import * as React from "react";
 import { toast } from "sonner";
 
 export function useProfilePage() {
+  const apiFetch = useApiFetch();
   const { user, setUser } = useAuth();
   const [savingProfile, setSavingProfile] = React.useState(false);
   const [savingPassword, setSavingPassword] = React.useState(false);
