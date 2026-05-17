@@ -7,29 +7,53 @@ import { setAccessToken } from "../../lib/authorization/token";
 type AuthContextType = {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  isAuthLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function AuthProvider({
-  children,
-  initialUser,
-  initialToken,
-}: {
-  children: React.ReactNode;
-  initialUser: User | null;
-  initialToken: string | null;
-}) {
-  const [user, setUser] = useState<User | null>(initialUser);
-  //store accessToken
+function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  // fetch user
   useEffect(() => {
-    if (initialToken) {
-      setAccessToken(initialToken);
+    //get user from backedn
+    async function getUser() {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+          {
+            method: "GET",
+            credentials: "include",
+
+            cache: "no-store",
+          },
+        );
+
+        if (!res.ok) {
+          setUser(null);
+          setAccessToken(null);
+
+          return;
+        }
+
+        const { user, accessToken } = await res.json();
+        setUser(user);
+        setAccessToken(accessToken);
+      } catch (error) {
+        setUser(null);
+        setAccessToken(null);
+      } finally {
+        setIsAuthLoading(false);
+      }
     }
-  }, [initialToken]);
+
+    getUser();
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser }}>
+    <AuthContext.Provider value={{ user, setUser, isAuthLoading }}>
       {children}
     </AuthContext.Provider>
   );

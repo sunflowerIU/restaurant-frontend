@@ -35,7 +35,11 @@ export default function Navigation({
     return user ? (
       <DropdownMenuUser onClose={() => setOpen(false)} mobileNav={true} />
     ) : (
-      <AppButton variant="secondary" href="/login">
+      <AppButton
+        onClick={() => setOpen(false)}
+        variant="secondary"
+        href="/login"
+      >
         Login
       </AppButton>
     );

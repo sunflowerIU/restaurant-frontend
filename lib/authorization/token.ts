@@ -1,6 +1,6 @@
 let accessToken: string | null;
 
-export function setAccessToken(token: string) {
+export function setAccessToken(token: string | null) {
   accessToken = token;
 }
 

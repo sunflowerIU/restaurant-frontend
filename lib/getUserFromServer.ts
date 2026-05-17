@@ -1,17 +1,19 @@
-import { cookies } from "next/headers";
+// import { cookies } from "next/headers";
+
+"use client";
 
 export async function getUserFromServer() {
-  const cookieStore = await cookies();
-  const refreshToken = cookieStore.get("refreshToken");
+  // const cookieStore = await cookies();
+  // const refreshToken = cookieStore.get("refreshToken");
 
-  if (!refreshToken) return { user: null, accessToken: null };
+  // if (!refreshToken) return { user: null, accessToken: null };
 
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
     method: "GET",
-    // credentials: "include",
-    headers: {
-      Cookie: `refreshToken=${refreshToken.value}`,
-    },
+    credentials: "include",
+    // headers: {
+    //   Cookie: `refreshToken=${refreshToken.value}`,
+    // },
 
     cache: "no-store",
   });

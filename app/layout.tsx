@@ -1,12 +1,11 @@
+import { AuthProvider } from "@/app/_providers/AuthProvider";
+import Navigation from "@/components/Navigation";
+import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
-import "./globals.css";
-import { cn } from "@/lib/utils";
-import Navigation from "@/components/Navigation";
 import { CartProvider } from "./_providers/CartContext";
-import { AuthProvider } from "@/app/_providers/AuthProvider";
-import { Toaster } from "@/components/ui/sonner";
-import { getUserFromServer } from "@/lib/getUserFromServer";
+import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -30,13 +29,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { user, accessToken } = await getUserFromServer();
   return (
     <html lang="en" className={cn("font-sans", inter.variable)}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden overflow-y-hidden min-h-screen`}
       >
-        <AuthProvider initialToken={accessToken} initialUser={user}>
+        <AuthProvider>
           <CartProvider>
             <Toaster
               toastOptions={{
