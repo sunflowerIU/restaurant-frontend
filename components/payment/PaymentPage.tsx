@@ -58,7 +58,7 @@ function PaymentPage({
 
   useEffect(() => {
     if (state?.data.gateway === "esewa") {
-      console.log(state.data);
+      // console.log(state.data);
       formRef.current?.submit();
     }
   }, [state]);

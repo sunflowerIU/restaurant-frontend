@@ -1,5 +1,4 @@
 import type { LoginForm, SignupForm } from "@/lib/types/auth";
-import { setAccessToken } from "./authorization/token";
 import type { User } from "./types/profile";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -55,8 +54,6 @@ export async function loginUser(payload: LoginForm) {
   if (!response.ok) {
     throw new Error(data?.message || "Login failed");
   }
-
-  setAccessToken(data.accessToken);
 
   return data;
 }

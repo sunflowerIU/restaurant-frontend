@@ -20,10 +20,11 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import AppButton from "@/components/AppButton";
-import { apiFetch } from "@/lib/authorization/api";
 import { toast } from "sonner";
 import { Order, ordersData, OrderStatus } from "../../lib/types/order";
 import Spinner from "@/components/Spinner";
+import { useAuth } from "../_providers/AuthProvider";
+import { useApiFetch } from "@/lib/authorization/api";
 
 function StatusBadge({ status }: { status: OrderStatus }) {
   const colors: Record<OrderStatus, string> = {
@@ -176,6 +177,7 @@ function OrdersTable({ orders }: { orders: Order[] }) {
 }
 
 export default function OrdersPage() {
+  const apiFetch = useApiFetch();
   const [allOrders, setAllOrders] = React.useState<Order[]>([]);
   const [tab, setTab] = React.useState<
     "all" | "preparing" | "delivered" | "cancelled"
@@ -202,6 +204,7 @@ export default function OrdersPage() {
       try {
         const response = await apiFetch(
           `${process.env.NEXT_PUBLIC_API_URL}/order/get`,
+          {},
         );
 
         const { data } = await response.json();

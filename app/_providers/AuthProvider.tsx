@@ -2,12 +2,13 @@
 
 import type { User } from "@/lib/types/profile";
 import React, { createContext, use, useEffect, useState } from "react";
-import { setAccessToken } from "../../lib/authorization/token";
 
 type AuthContextType = {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   isAuthLoading: boolean;
+  accessToken: string | null;
+  setAccessToken: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // fetch user
   useEffect(() => {
@@ -53,7 +55,9 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, isAuthLoading }}>
+    <AuthContext.Provider
+      value={{ user, setUser, isAuthLoading, accessToken, setAccessToken }}
+    >
       {children}
     </AuthContext.Provider>
   );

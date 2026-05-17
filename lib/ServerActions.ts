@@ -1,4 +1,4 @@
-import { apiFetch } from "./authorization/api";
+import { useApiFetch } from "./authorization/api";
 import { OrderSchema, PaymentInitiateSchema } from "./types/order";
 
 ///reset password form submission
@@ -91,8 +91,9 @@ export async function initiatePayment(
   paymentData: PaymentInitiateSchema,
 ) {
   const idempotencyKey = crypto.randomUUID();
-  console.log(paymentData);
+  // console.log(paymentData);
   try {
+    const apiFetch = useApiFetch();
     const response = await apiFetch(
       `${process.env.NEXT_PUBLIC_API_URL}/payment/initiate`,
       {

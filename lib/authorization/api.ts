@@ -1,20 +1,24 @@
-import { getAccessToken, setAccessToken } from "./token";
+"use client";
 
-export async function apiFetch(url: string, options: RequestInit = {}) {
-  let token = getAccessToken();
+import { useAuth } from "@/app/_providers/AuthProvider";
 
-  //attach token
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      ...(options.headers || {}),
-      Authorization: token ? `Bearer ${token}` : "",
-    },
-    credentials: "include",
-  });
+export function useApiFetch() {
+  const { accessToken, setAccessToken } = useAuth();
 
-  //token expired
-  if (res.status === 401) {
+  async function apiFetch(url: string, options: RequestInit = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      credentials: "include",
+    });
+
+    if (res.status !== 401) {
+      return res;
+    }
+
     const refreshResponse = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
       {
@@ -23,23 +27,26 @@ export async function apiFetch(url: string, options: RequestInit = {}) {
       },
     );
 
-    if (refreshResponse.status === 401) {
-      window.location.replace("/");
-      throw new Error("Session expired. Please login");
+    if (!refreshResponse.ok) {
+      setAccessToken(null);
+      window.location.replace("/login");
+      throw new Error("Session expired. Please login again.");
     }
 
     const result = await refreshResponse.json();
-    setAccessToken(result.accessToken);
+    const newAccessToken = result.accessToken;
 
-    // retry fetch
-    return await fetch(url, {
+    setAccessToken(newAccessToken);
+
+    return fetch(url, {
       ...options,
       headers: {
         ...(options.headers || {}),
-        Authorization: token ? `Bearer ${token}` : "",
+        Authorization: `Bearer ${newAccessToken}`,
       },
       credentials: "include",
     });
   }
-  return res;
+
+  return apiFetch;
 }

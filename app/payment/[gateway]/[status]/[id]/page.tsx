@@ -1,28 +1,63 @@
+"use client";
+
 import AppButton from "@/components/AppButton";
-import { notFound } from "next/navigation";
+import Spinner from "@/components/Spinner";
+import { useApiFetch } from "@/lib/authorization/api";
+import { notFound, useParams, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ status: string; id: string }>;
-}) {
-  const statusType = ["success", "failed"];
+export default function Page() {
+  const apiFetch = useApiFetch();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const statusType = ["success", "failure"];
+  const gatewayType = ["esewa", "khalti"];
+  const {
+    status,
+    id: paymentId,
+    gateway,
+  } = useParams() as { status: string; id: string; gateway: string };
 
-  const { status, id } = await params;
-  if (!statusType.includes(status)) {
+  const paymentResponse = useSearchParams().get("data");
+
+  //guard
+  if (
+    !statusType.includes(status) ||
+    !gatewayType.includes(gateway) ||
+    !paymentResponse
+  ) {
     return notFound();
   }
-  //   console.log(await params);
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/order/check/${id}`,
-  );
+  // console.log(status, paymentId, paymentResponse, gateway);
 
-  if (!response.ok) return notFound();
-
-  const { data } = await response.json();
-
-  if (data.paymentStatus !== "paid") return notFound();
+  // if (data.paymentStatus !== "paid") return notFound();
   //check if order exists and is paid
+
+  useEffect(() => {
+    async function verifyPayment() {
+      //verify payment
+      try {
+        const response = await apiFetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/payment/${gateway}/${status}/${paymentId}?data=${paymentResponse}`,
+          {},
+        );
+        const data = await response.json();
+        // console.log(data);
+        if (data.success) {
+          setIsSuccess(true);
+        } else {
+          setIsSuccess(false);
+        }
+      } catch (error) {
+        setIsSuccess(false);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    verifyPayment();
+  }, []);
+
+  if (isLoading) return <Spinner />;
 
   return (
     <main className="relative min-h-screen overflow-hidden">
@@ -35,16 +70,19 @@ export default async function Page({
       <div className="relative mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-14 sm:px-6">
         <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-3xl">
-            ✅
+            {isSuccess ? "✅" : "❌"}
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Payment successful and Order placed successfully
+            {isSuccess
+              ? "Payment successful and Order placed successfully"
+              : "Payment failed"}
           </h1>
 
           <p className="mt-3 text-sm text-white/65 sm:text-base">
-            Thank you for your order. We have received your request and will
-            start processing it shortly.
+            {isSuccess
+              ? "Thank you for your order. We have received your request and will start processing it shortly"
+              : "Please try again"}
           </p>
 
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -52,7 +90,7 @@ export default async function Page({
               Order ID
             </p>
             <p className="mt-2 break-all text-lg font-medium text-white">
-              {id}
+              {paymentId}
             </p>
           </div>
 
