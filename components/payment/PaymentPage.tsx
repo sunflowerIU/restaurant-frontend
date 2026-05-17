@@ -1,21 +1,27 @@
 "use client";
-import { initiatePayment } from "@/lib/ServerActions";
+
 import { PaymentInitiateSchema } from "@/lib/types/order";
 import { OrderItem, PaymentGateway } from "@/lib/types/payment.types";
 import { Address } from "@/lib/types/profile";
 import Image from "next/image";
-import React, {
-  startTransition,
-  useActionState,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AppButton from "../AppButton";
 import { Card, CardContent } from "../ui/card";
 import { RadioGroup } from "../ui/radio-group";
 import { Separator } from "../ui/separator";
 import BadgeForStatus from "./BadgeForStatus";
 import GatewayOption from "./GatewayOption";
+import { useApiFetch } from "@/lib/authorization/api";
+
+type PaymentState = {
+  success?: boolean;
+  message?: string;
+  data?: {
+    gateway: PaymentGateway;
+    formAction: string;
+    fields: Record<string, string | number>;
+  };
+};
 
 function PaymentPage({
   order,
@@ -33,16 +39,15 @@ function PaymentPage({
   };
 }) {
   const [gateway, setGateway] = React.useState<PaymentGateway>("esewa");
-  const [state, dispatchAction, isPending] = useActionState(
-    initiatePayment,
-    null,
-  );
+  const [state, setState] = useState<PaymentState | null>(null);
+  const [isPending, setIsPending] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
 
-  //start payment function
+  // hook must be here, directly inside component body
+  const apiFetch = useApiFetch();
+
   async function startPayment() {
-    // console.log(order);
     const payload: PaymentInitiateSchema = {
       gateway,
       items: order.items,
@@ -50,15 +55,53 @@ function PaymentPage({
       orderId: order.id,
     };
 
-    // console.log(payload);
-    startTransition(() => {
-      dispatchAction(payload);
-    });
+    const idempotencyKey = crypto.randomUUID();
+
+    try {
+      setIsPending(true);
+      setState(null);
+
+      const response = await apiFetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/payment/initiate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey,
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setState({
+          success: false,
+          message: data.message || "Failed to initiate payment",
+        });
+        return;
+      }
+
+      setState({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      console.log(error);
+
+      setState({
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to initiate payment",
+      });
+    } finally {
+      setIsPending(false);
+    }
   }
 
   useEffect(() => {
-    if (state?.data.gateway === "esewa") {
-      // console.log(state.data);
+    if (state?.data?.gateway === "esewa") {
       formRef.current?.submit();
     }
   }, [state]);
@@ -110,7 +153,6 @@ function PaymentPage({
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-5">
-          {/* Left: order details */}
           <div className="lg:col-span-3">
             <Card className="rounded-3xl border-white/10 bg-white/[0.03]">
               <CardContent className="p-6">
@@ -144,11 +186,12 @@ function PaymentPage({
                             sizes="56px"
                           />
                         </div>
+
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-white">
                             {it.name}
                           </p>
-                          <div className="flex   gap-2">
+                          <div className="flex gap-2">
                             <p className="mt-1 text-xs text-white/55">
                               Qty: {it.qty}
                             </p>
@@ -158,6 +201,7 @@ function PaymentPage({
                           </div>
                         </div>
                       </div>
+
                       <p className="text-sm font-semibold text-white">
                         Rs. {+it.price * it.qty}
                       </p>
@@ -178,16 +222,19 @@ function PaymentPage({
                         order.shippingAddress.label}
                     </span>
                   </div>
+
                   <div className="flex items-center justify-between">
                     <span className="text-white/65">Phone</span>
                     <span className="text-white/80">{order.phone}</span>
                   </div>
+
                   <div className="flex items-center justify-between">
                     <span className="text-white/65">Shipping Fee</span>
                     <span className="text-white/80">
                       Rs. {order.shippingFee}
                     </span>
                   </div>
+
                   <div className="flex items-center justify-between">
                     <span className="text-white/65">Total</span>
                     <span className="text-white/80">
@@ -199,7 +246,6 @@ function PaymentPage({
             </Card>
           </div>
 
-          {/* Right: gateway selection + totals */}
           <div className="lg:col-span-2">
             <Card className="rounded-3xl border-white/10 bg-white/[0.03]">
               <CardContent className="p-6">
@@ -224,6 +270,7 @@ function PaymentPage({
                     title="eSewa"
                     desc="Pay using eSewa wallet."
                   />
+
                   <GatewayOption
                     id="pay-khalti"
                     value="khalti"
@@ -244,7 +291,14 @@ function PaymentPage({
                   </div>
                 </div>
 
+                {state?.success === false && state.message && (
+                  <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                    {state.message}
+                  </p>
+                )}
+
                 <AppButton
+                  type="button"
                   variant="secondary"
                   className="mt-6 w-full rounded-2xl"
                   onClick={startPayment}
@@ -253,8 +307,8 @@ function PaymentPage({
                   {isPending
                     ? "Redirecting..."
                     : gateway === "esewa"
-                      ? "Pay with esewa"
-                      : "Pay with khalti"}
+                      ? "Pay with eSewa"
+                      : "Pay with Khalti"}
                 </AppButton>
               </CardContent>
             </Card>

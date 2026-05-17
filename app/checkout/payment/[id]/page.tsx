@@ -11,7 +11,7 @@ export default async function Page({
     `${process.env.NEXT_PUBLIC_API_URL}/order/get-for-payment/${id}`,
   );
   const order = await data.json();
-  console.log(order);
+  // console.log(order);
 
   if (!order.data) return notFound();
 
