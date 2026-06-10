@@ -5,7 +5,7 @@ The project includes a restaurant landing page, menu page, authentication pages,
 
 ## Live Demo
 
-[View Live Project](https://restaurant-frontend-xi-five.vercel.app)
+[View Live Project](https://restaurant-frontend-y3tz.vercel.app/)
 
 ## Overview
 
